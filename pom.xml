@@ -29,6 +29,26 @@
     <properties>
         <java.version>21</java.version>
     </properties>
+
+    <profiles>
+        <!-- Dev profile -->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <spring.profiles.active>dev</spring.profiles.active>
+            </properties>
+        </profile>
+
+        <!-- Prod profile -->
+        <profile>
+            <id>prod</id>
+            <properties>
+                <spring.profiles.active>prod</spring.profiles.active>
+            </properties>
+        </profile>
+    </profiles>
+
+
     <dependencies>
         <!-- Core -->
         <dependency>
@@ -119,6 +139,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <profiles>dev</profiles> <!-- default profile when running mvn spring-boot:run -->
+                </configuration>
             </plugin>
         </plugins>
     </build>

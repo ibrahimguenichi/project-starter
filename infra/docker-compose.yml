@@ -1,0 +1,62 @@
+name: "${APP_NAME}"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: ${APP_NAME}:latest
+    container_name: ${APP_NAME}_app
+    restart: always
+    ports:
+      - "${SPRING_APP_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-projectstarter}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-projectuser}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-projectpass}
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: ${MAILPIT_SMTP_PORT:-1025}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - project_network
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: ${APP_NAME}_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-projectuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-projectpass}
+      POSTGRES_DB: ${POSTGRES_DB:-projectstarter}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projectuser}"]
+      interval: 10s
+      retries: 10
+    networks:
+      - project_network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ${APP_NAME}_mailpit
+    restart: always
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_WEB_PORT:-8025}:8025"
+    networks:
+      - project_network
+
+volumes:
+  postgres_data:
+
+networks:
+  project_network:
+    driver: bridge
